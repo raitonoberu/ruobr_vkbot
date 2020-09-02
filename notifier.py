@@ -2,8 +2,11 @@ import asyncio
 import json
 import safe_api as ruobr_api
 from datetime import datetime
-from config import WAIT_IN_MINS
-from help import *
+import pytz
+from config import WAIT_IN_MINS, TIMEZONE
+from help import compare_marks, marks_to_str
+
+tz = pytz.timezone(TIMEZONE)
 
 
 class Notifier(object):
@@ -45,7 +48,9 @@ class Notifier(object):
             delta = compare_marks(marks, new_marks)
             if not delta:
                 return
-            await self.send_msg("Вы получили оценки:\n" + marks_to_str(delta), user.vk_id)
+            await self.send_msg(
+                "Вы получили оценки:\n" + marks_to_str(delta), user.vk_id
+            )
         elif marks == {}:  # не трогать бд если всё ещё нет оценок
             return
         await self.db.update_marks(user.vk_id, json.dumps(new_marks))

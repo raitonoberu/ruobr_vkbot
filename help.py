@@ -3,7 +3,7 @@ from datetime import timedelta
 
 def convert_marks(marks):
     # {'Иностранный язык': [{'question_name': 'Ответ на уроке', 'question_id': 102494195, 'number': 1, 'question_type': 'Ответ на уроке', 'mark': '5'}], 'ОБЖ': [{'question_name': 'Ответ на уроке', 'question_id': 101356763, 'number': 1, 'question_type': 'Ответ на уроке', 'mark': '4'}]}
-    marks = {key: [i['mark'] for i in marks[key]] for key in marks.keys()}
+    marks = {key: [i["mark"] for i in marks[key]] for key in marks.keys()}
     return marks
     # [{'Иностранный язык': ['5'], 'ОБЖ': ['4']}]
 
@@ -26,7 +26,9 @@ def compare_marks(marks0, marks1):
 
 
 def marks_to_str(marks):
-    return "\n".join([f"{subject.strip()}: {', '.join(marks)}" for subject, marks in marks.items()])
+    return "\n".join(
+        [f"{subject.strip()}: {', '.join(marks)}" for subject, marks in marks.items()]
+    )
 
 
 def monday(date):
