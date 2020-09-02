@@ -100,7 +100,6 @@ async def logout(event: bot.SimpleBotEvent):
 
 @bot.message_handler(bot.text_filter("оценки"))
 async def marks(event: bot.SimpleBotEvent):
-    raise TimeoutError
     vk_id = event.object.object.message.peer_id
     user = await db.get_user(vk_id)
     if not user:
