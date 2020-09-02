@@ -1,0 +1,4 @@
+vkwave
+pytz
+aiosqlite
+httpx
