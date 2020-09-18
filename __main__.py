@@ -113,7 +113,7 @@ async def marks(event: bot.SimpleBotEvent):
         return
     if marks:
         await answer(
-            event, "Ваши оценки за неделю:\n" + marks_to_str(convert_marks(marks))
+            event, "Ваши оценки за неделю:\n" + marks_to_str(marks)
         )
     else:
         await answer(event, "Вы не получали оценок за эту неделю.")
