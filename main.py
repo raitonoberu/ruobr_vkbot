@@ -7,6 +7,7 @@ from config import DATABASE_URL, TOKEN, ID, TIMEZONE
 from utils import marks_to_str, monday
 import asyncio
 import api as ruobr_api
+import strings
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -17,7 +18,7 @@ tz = pytz.timezone(TIMEZONE)
 bot = SimpleLongPollBot(tokens=TOKEN, group_id=ID)
 
 
-@bot.message_handler(bot.text_contains_filter("войти"))
+@bot.message_handler(bot.text_contains_filter(strings.LOGIN))
 async def login(event: bot.SimpleBotEvent):
     text = event.object.object.message.text
     vk_id = event.object.object.message.peer_id
@@ -43,15 +44,15 @@ async def login(event: bot.SimpleBotEvent):
         return
     except:
         logging.exception("")
-        await answer(event, "Произошла ошибка.")
+        await answer(event, "Произошла ошибка. Сообщите разработчику.")
         return
     name = user["first_name"] + " " + user["last_name"]
     await db.add_user(vk_id, login, password, name, user["id"])
     logging.info(str(vk_id) + " logged in")
-    await answer(event, f"Вы успешно вошли как {name}.")
+    await answer(event, f"Вы вошли как {name}.")
 
 
-@bot.message_handler(bot.text_filter("подписаться"))
+@bot.message_handler(bot.text_filter(strings.SUBSCRIBE))
 async def subscribe(event: bot.SimpleBotEvent):
     vk_id = event.object.object.message.peer_id
     user = await db.get_user(vk_id)
@@ -61,12 +62,12 @@ async def subscribe(event: bot.SimpleBotEvent):
     if not user.status:  # пользователь не подписан
         await db.update_status(vk_id, True)
         logging.info(str(vk_id) + " subscribed")
-        await answer(event, "Вы успешно подписались.")
+        await answer(event, "Вы подписались на обновления оценок.")
     else:
         await answer(event, "Вы уже подписаны.")
 
 
-@bot.message_handler(bot.text_filter("отписаться"))
+@bot.message_handler(bot.text_filter(strings.UNSUBSCRIBE))
 async def unsubscribe(event: bot.SimpleBotEvent):
     vk_id = event.object.object.message.peer_id
     user = await db.get_user(vk_id)
@@ -76,12 +77,12 @@ async def unsubscribe(event: bot.SimpleBotEvent):
     if user.status:  # пользователь подписан
         await db.update_status(vk_id, False)
         logging.info(str(vk_id) + " unsubscribed")
-        await answer(event, "Вы успешно отписались.")
+        await answer(event, "Вы отписались от обновлений оценок.")
     else:
         await answer(event, "Вы не подписаны.")
 
 
-@bot.message_handler(bot.text_filter("выйти"))
+@bot.message_handler(bot.text_filter(strings.LOGOUT))
 async def logout(event: bot.SimpleBotEvent):
     vk_id = event.object.object.message.peer_id
     user = await db.get_user(vk_id)
@@ -90,10 +91,10 @@ async def logout(event: bot.SimpleBotEvent):
         return
     await db.remove_user(vk_id)
     logging.info(str(vk_id) + " logged out")
-    await answer(event, "Вы успешно вышли.")
+    await answer(event, "Вы вышли.")
 
 
-@bot.message_handler(bot.text_filter("оценки"))
+@bot.message_handler(bot.text_filter(strings.MARKS))
 async def marks(event: bot.SimpleBotEvent):
     vk_id = event.object.object.message.peer_id
     user = await db.get_user(vk_id)
@@ -112,7 +113,7 @@ async def marks(event: bot.SimpleBotEvent):
         await answer(event, "Вы не получали оценок за эту неделю.")
 
 
-@bot.message_handler(bot.text_filter("питание"))
+@bot.message_handler(bot.text_filter(strings.FOOD))
 async def food(event: bot.SimpleBotEvent):
     vk_id = event.object.object.message.peer_id
     user = await db.get_user(vk_id)
@@ -137,7 +138,7 @@ async def food(event: bot.SimpleBotEvent):
     await answer(event, f"Ваш баланс: {balance} руб.\n{ordered}")
 
 
-@bot.message_handler(bot.text_filter("почта"))
+@bot.message_handler(bot.text_filter(strings.MAIL))
 async def mail(event: bot.SimpleBotEvent):
     vk_id = event.object.object.message.peer_id
     user = await db.get_user(vk_id)
@@ -163,6 +164,11 @@ async def mail(event: bot.SimpleBotEvent):
         event,
         f"Последнее непрочитанное сообщение ({letter['post_date']}):\nТема: {letter['subject']}\nАвтор: {letter['author']}\n\n{letter['clean_text']}",
     )
+
+
+@bot.message_handler(bot.text_filter(strings.COMMANDS))
+async def commands(event: bot.SimpleBotEvent):
+    await answer(event, strings.COMMANDS_TEXT)
 
 
 async def answer(event, text):
