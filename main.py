@@ -1,17 +1,12 @@
-"""
-TODO:
-- Возвращение дз
-"""
-
 from vkwave.bots import SimpleLongPollBot
 from db_access import Database
 from notifier import Notifier
 from datetime import datetime, timedelta
 import pytz
 from config import DATABASE_URL, TOKEN, ID, TIMEZONE
-from help import convert_marks, marks_to_str, monday
+from utils import marks_to_str, monday
 import asyncio
-import safe_api as ruobr_api
+import api as ruobr_api
 import logging
 
 logging.basicConfig(level=logging.INFO)

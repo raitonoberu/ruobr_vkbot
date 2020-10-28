@@ -1,10 +1,10 @@
 import asyncio
 import json
-import safe_api as ruobr_api
+import api as ruobr_api
 from datetime import datetime
 import pytz
 from config import WAIT_IN_MINS, TIMEZONE
-from help import compare_marks, marks_to_str
+from utils import compare_marks, marks_to_str
 import logging
 
 tz = pytz.timezone(TIMEZONE)
