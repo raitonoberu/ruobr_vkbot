@@ -8,7 +8,7 @@ from db_access import Database
 from notifier import Notifier
 from datetime import datetime, timedelta
 import pytz
-from config import DATABASE_FILE, TOKEN, ID, TIMEZONE
+from config import DATABASE_URL, TOKEN, ID, TIMEZONE
 from help import convert_marks, marks_to_str, monday
 import asyncio
 import safe_api as ruobr_api
@@ -16,7 +16,7 @@ import logging
 
 logging.basicConfig(level=logging.INFO)
 
-db = Database(DATABASE_FILE)
+db = Database(DATABASE_URL)
 tz = pytz.timezone(TIMEZONE)
 
 bot = SimpleLongPollBot(tokens=TOKEN, group_id=ID)
@@ -46,8 +46,8 @@ async def login(event: bot.SimpleBotEvent):
     except ruobr_api.AuthenticationException:
         await answer(event, "Проверьте логин и/или пароль.")
         return
-    except Exception as e:
-        logging.error(e)
+    except:
+        logging.exception("")
         await answer(event, "Произошла ошибка.")
         return
     name = user["first_name"] + " " + user["last_name"]
@@ -112,9 +112,7 @@ async def marks(event: bot.SimpleBotEvent):
         db.remove_user(user.vk_id)
         return
     if marks:
-        await answer(
-            event, "Ваши оценки за неделю:\n" + marks_to_str(marks)
-        )
+        await answer(event, "Ваши оценки за неделю:\n" + marks_to_str(marks))
     else:
         await answer(event, "Вы не получали оценок за эту неделю.")
 
@@ -179,11 +177,23 @@ async def answer(event, text):
     await event.answer(text)
 
 
-def main():
+async def main():
+    await db.connect()
+    if not (await db.is_exists()):
+        logging.info("Creating a new table...")
+        await db.create_table()
+    else:
+        logging.info("Table already exists")
     notifier = Notifier(bot.api_context, db)
     notifier.run()
-    bot.run_forever()
+    await bot.run()
 
 
 if __name__ == "__main__":
-    main()
+    loop = asyncio.get_event_loop()
+    loop.create_task(main())
+    try:
+        loop.run_forever()
+    finally:
+        logging.info("Closing database...")
+        loop.run_until_complete(db.close())

@@ -1,5 +1,5 @@
 ruobr_api
 vkwave
 pytz
-aiosqlite
+asyncpg
 httpx

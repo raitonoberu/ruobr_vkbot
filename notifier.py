@@ -25,8 +25,8 @@ class Notifier(object):
                 tasks = [self.check_user(user) for user in users]
                 marks = await asyncio.gather(*tasks)
                 await asyncio.sleep(WAIT_IN_MINS * 60)
-            except Exception as e:
-                logging.error(e)
+            except:
+                logging.exception("")
                 await asyncio.sleep(1)
 
     async def send_msg(self, text, vk_id):
