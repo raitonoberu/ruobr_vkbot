@@ -43,7 +43,7 @@ async def login(event: bot.SimpleBotEvent):
     password = loginpassword[1]
     try:
         user = await ruobr_api.AsyncRuobr(login, password).getUser()
-    except ruobr_api.AuthError:
+    except ruobr_api.AuthenticationException:
         await answer(event, "Проверьте логин и/или пароль.")
         return
     except Exception as e:
@@ -108,7 +108,7 @@ async def marks(event: bot.SimpleBotEvent):
     date = monday(datetime.now(tz))
     try:
         marks = await ruobr_api.get_marks(user, date, date + timedelta(days=6))
-    except ruobr_api.AuthError:
+    except ruobr_api.AuthenticationException:
         db.remove_user(user.vk_id)
         return
     if marks:
@@ -130,7 +130,7 @@ async def food(event: bot.SimpleBotEvent):
     ruobr.user = {"id": user.ruobr_id}
     try:
         info = await ruobr.getFoodInfo()
-    except ruobr_api.AuthError:
+    except ruobr_api.AuthenticationException:
         db.remove_user(user.vk_id)
         return
     balance = round(int(info["balance"]) / 100, 1)
@@ -155,7 +155,7 @@ async def mail(event: bot.SimpleBotEvent):
     ruobr.user = {"id": user.ruobr_id}
     try:
         mail = await ruobr.getMail()
-    except ruobr_api.AuthError:
+    except ruobr_api.AuthenticationException:
         db.remove_user(user.vk_id)
         return
     if not mail:

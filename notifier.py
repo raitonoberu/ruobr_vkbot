@@ -41,7 +41,7 @@ class Notifier(object):
         date = datetime.now()
         try:
             new_marks = await ruobr_api.get_marks(user, date, date)
-        except ruobr_api.AuthError:
+        except ruobr_api.AuthenticationException:
             await self.send_msg("Проверьте логин и/или пароль.", user.vk_id)
             await self.db.remove_user(user.vk_id)
             return

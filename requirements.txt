@@ -1,3 +1,4 @@
+ruobr_api
 vkwave
 pytz
 aiosqlite
