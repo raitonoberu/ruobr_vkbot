@@ -30,7 +30,10 @@ class Notifier(object):
                 await asyncio.sleep(1)
 
     async def send_msg(self, text, vk_id):
-        await self.api.messages.send(peer_id=vk_id, message=text, random_id=0)
+        try:
+            await self.api.messages.send(peer_id=vk_id, message=text, random_id=0)
+        except Exception as e:
+            logging.error(f"{vk_id}: {e}")
 
     async def check_user(self, user):
         marks = user.marks
@@ -38,7 +41,7 @@ class Notifier(object):
             marks = json.loads(marks)
         else:  # новый день / инициация
             marks = {}
-        date = datetime.now()
+        date = datetime.now(tz)
         try:
             new_marks = await ruobr_api.get_marks(user, date, date)
         except ruobr_api.AuthenticationException:
