@@ -1,9 +1,3 @@
-"""
-TODO:
-• Проверить работу нотифайера
-• Обработать ситуацию, когда отправить сообщение невозможно
-• Каким-то образом обработать родительский профиль
-"""
 from vkwave.bots import SimpleLongPollBot
 from db_access import Database
 from notifier import Notifier
