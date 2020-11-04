@@ -56,7 +56,7 @@ async def get_mail(user):
     if not letter:  # no right letter
         return {}
 
-    letter['clean_text'].replace("&nbsp", "")
+    letter['clean_text'] = letter['clean_text'].replace("&nbsp;", "")
     return letter
 
 
@@ -65,8 +65,9 @@ async def get_news(user):
     news = await ruobr.getNews()
     if not news:
         return {}
-    news[0]['clean_text'].replace("&nbsp", "")
-    return news[0]
+    new = news[0]
+    new['clean_text'] = new['clean_text'].replace("&nbsp;", "")
+    return new
 
 
 async def get_status(user):
