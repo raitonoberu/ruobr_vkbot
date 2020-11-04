@@ -15,6 +15,7 @@ from utils import marks_to_str, homework_to_str, monday, iso_to_string
 import asyncio
 import api as ruobr_api
 import strings
+import keyboards
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -55,7 +56,7 @@ async def login(event: bot.SimpleBotEvent):
     name = user["first_name"] + " " + user["last_name"]
     await db.add_user(vk_id, login, password, name, user["id"])
     logging.info(str(vk_id) + " logged in")
-    await answer(event, f"Вы вошли как {name}.")
+    await answer(event, f"Вы вошли как {name}.", keyboards.MAIN)
 
 
 @bot.message_handler(bot.text_filter(strings.SUBSCRIBE))
@@ -213,12 +214,12 @@ async def commands(event: bot.SimpleBotEvent):
     await answer(event, strings.COMMANDS_TEXT)
 
 
-async def answer(event, text):
+async def answer(event, text, keyboard=None):
     if len(text) > 4096:
-        await event.answer(text[:4096], dont_parse_links=True)
-        await answer(event, text[4096:])
+        await event.answer(text[:4096], dont_parse_links=True, keyboard=keyboard)
+        await answer(event, text[4096:], keyboard=keyboard)
     else:
-        await event.answer(text, dont_parse_links=True)
+        await event.answer(text, dont_parse_links=True, keyboard=keyboard)
 
 
 async def main():
