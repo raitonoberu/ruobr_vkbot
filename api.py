@@ -42,12 +42,21 @@ async def get_mail(user):
     mail = await ruobr.getMail()
     if not mail:
         return {}
-    letter = mail[0]
-    for i in mail:
+    letter = None
+    for i in mail:  # search for unread letter
         if not i["read"]:
             letter = i
             await ruobr.readMessage(letter["id"])
             break
+    if not letter:
+        for i in mail:  # search for right letter
+            if i['id'] != -1:
+                letter = i
+                break
+    if not letter:  # no right letter
+        return {}
+
+    letter['clean_text'].replace("&nbsp", "")
     return letter
 
 
@@ -56,6 +65,7 @@ async def get_news(user):
     news = await ruobr.getNews()
     if not news:
         return {}
+    news[0]['clean_text'].replace("&nbsp", "")
     return news[0]
 
 
