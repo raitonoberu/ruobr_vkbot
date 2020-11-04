@@ -39,7 +39,6 @@ async def get_food(user, date1, date2):
 
 async def get_mail(user):
     ruobr = AsyncRuobr(user.username, user.password)
-    ruobr.user = {"id": user.ruobr_id}
     mail = await ruobr.getMail()
     if not mail:
         return {}
@@ -50,6 +49,14 @@ async def get_mail(user):
             await ruobr.readMessage(letter["id"])
             break
     return letter
+
+
+async def get_news(user):
+    ruobr = AsyncRuobr(user.username, user.password)
+    news = await ruobr.getNews()
+    if not news:
+        return {}
+    return news[0]
 
 
 async def get_status(user):

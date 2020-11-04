@@ -41,7 +41,7 @@ async def login(event: bot.SimpleBotEvent):
         return
     loginpassword = " ".join(args[1:])
     if not (":" in loginpassword):  # неправильная форма
-        await answer(event, f'Пример: "{strings.LOGIN[0]} <логин>:<пароль>"')
+        await answer(event, f'Пример: "{strings.LOGIN[0]} логин:пароль"')
         return
     login, password = loginpassword.split(":")
     try:
@@ -182,6 +182,28 @@ async def mail(event: bot.SimpleBotEvent):
     await answer(
         event,
         f"Последнее непрочитанное сообщение:\nДата: {iso_to_string(letter['post_date'])}\nТема: {letter['subject']}\nАвтор: {letter['author']}\n\n{letter['clean_text']}",
+    )
+
+
+@bot.message_handler(bot.text_filter(strings.NEWS))
+async def news(event: bot.SimpleBotEvent):
+    vk_id = event.object.object.message.peer_id
+    user = await db.get_user(vk_id)
+    if not user:
+        await answer(event, "Вы не вошли.")
+        return
+    logging.info(str(vk_id) + " requested news")
+    try:
+        new = await ruobr_api.get_news(user)
+    except ruobr_api.AuthenticationException:
+        await db.remove_user(user.vk_id)
+        return
+    if not new:
+        await answer(event, "Нет новостей.")
+        return
+    await answer(
+        event,
+        f"Последняя новость:\nЗаголовок: {new['title']}\nДата: {iso_to_string(new['date'])}\n\n{new['clean_text']}",
     )
 
 
