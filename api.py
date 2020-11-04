@@ -72,5 +72,7 @@ async def get_news(user):
 
 async def get_status(user):
     ruobr = AsyncRuobr(user.username, user.password)
-    status = await ruobr.getUser()
-    return status
+    children = await ruobr.getChildren()
+    for child in children:
+        if child['id'] == user.ruobr_id:
+            return child

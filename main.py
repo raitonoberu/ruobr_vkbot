@@ -32,6 +32,7 @@ async def login(event: bot.SimpleBotEvent):
     text = event.object.object.message.text
     vk_id = event.object.object.message.peer_id
 
+    # проверка правильности данных для входа
     args = text.split(" ")
     if not (args[0].lower() in strings.LOGIN):
         return
@@ -43,9 +44,17 @@ async def login(event: bot.SimpleBotEvent):
     if not (":" in loginpassword):  # неправильная форма
         await answer(event, f'Пример: "{strings.LOGIN[0]} логин:пароль"')
         return
-    login, password = loginpassword.split(":")
+    loginpassword = loginpassword.split(":")
+    if len(loginpassword) == 2:
+        login, password = loginpassword
+        child = None
+    else:
+        login, password, child = loginpassword  # родительский аккаунт
+
+    # авторизация
+    ruobr = ruobr_api.AsyncRuobr(login, password)
     try:
-        user = await ruobr_api.AsyncRuobr(login, password).getUser()
+        children = await ruobr.getChildren()
     except ruobr_api.AuthenticationException:
         await answer(event, "Проверьте логин и/или пароль.")
         return
@@ -53,6 +62,29 @@ async def login(event: bot.SimpleBotEvent):
         logging.exception("")
         await answer(event, "Произошла ошибка. Сообщите разработчику.")
         return
+
+    # обработка родительского аккаунта
+    if len(children) > 1:
+        if child:  # номер ребёнка указан
+            try:
+                child = int(child)
+                if child < 1:
+                    raise Exception
+                user = children[child - 1]
+            except:
+                await answer(event, f"Проверьте правильность написания номера ребёнка (число от 1 до {len(children)}).")
+                return
+        else:  # номер ребёнка не указан
+            text = "На аккаунте обнаружено несколько детей. Пожалуйста, выберите из списка ниже и добавьте номер через двоеточие (пример: \"войти логин:пароль:1\")\n"
+            i = 0
+            for child in children:
+                i += 1
+                text += f'\n{i} - {child.get("first_name")} {child.get("last_name")} {child["group"]}'
+            await answer(event, text)
+            return
+    else:  # один ребёнок
+        user = children[0]
+
     name = user["first_name"] + " " + user["last_name"]
     await db.add_user(vk_id, login, password, name, user["id"])
     logging.info(str(vk_id) + " logged in")
