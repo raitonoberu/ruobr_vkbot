@@ -205,7 +205,14 @@ async def status(event: bot.SimpleBotEvent):
             status.get("middle_name", ""),
         ]
     )
-    result = f"{name}\n\nID: {status['id']}\nШкола: {status['school']}\nКласс: {status['group']}"
+    result = f"{name}\n\nID: {status['id']}\nШкола: {status['school']}\nКласс: {status['group']}\n\n"
+
+    result += (
+        "Вы подписаны на обновления оценок."
+        if user.status
+        else "Вы не подписаны на обновления оценок."
+    )
+
     await answer(event, result)
 
 
