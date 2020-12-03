@@ -21,6 +21,13 @@ async def get_marks(user, date1, date2):
     return convert_marks(marks)
 
 
+async def get_progress(user, date):
+    ruobr = AsyncRuobr(user.username, user.password)
+    ruobr.user = {"id": user.ruobr_id}
+    progress = await ruobr.getProgress(date)
+    return progress
+
+
 async def get_homework(user, date1, date2):
     ruobr = AsyncRuobr(user.username, user.password)
     ruobr.user = {"id": user.ruobr_id}

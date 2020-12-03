@@ -147,6 +147,24 @@ async def marks(event: bot.SimpleBotEvent):
         await answer(event, "Вы не получали оценок за эту неделю.")
 
 
+@bot.message_handler(bot.text_filter(strings.PROGRESS))
+async def progress(event: bot.SimpleBotEvent):
+    vk_id = event.object.object.message.peer_id
+    user = await db.get_user(vk_id)
+    if not user:
+        await answer(event, "Вы не вошли.")
+        return
+    logging.info(str(vk_id) + " requested progress")
+    date = FORCE_DATE if FORCE_DATE else datetime.now(tz)
+    try:
+        marks = await ruobr_api.get_progress(user, date)
+    except ruobr_api.AuthenticationException:
+        await db.remove_user(user.vk_id)
+        return
+    if marks:
+        await
+
+
 @bot.message_handler(bot.text_filter(strings.HOMEWORK))
 async def homework(event: bot.SimpleBotEvent):
     vk_id = event.object.object.message.peer_id
