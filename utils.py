@@ -39,7 +39,7 @@ def convert_homework(homework):
         result.append(
             {
                 "title": item["task"]["title"],
-                "subject": item["subject"],
+                "subject": item["subject"].strip(),
                 "date": iso_to_string(item["task"]["deadline"]),
                 "url": Ruobr.getHomeworkById(item["task"]["id"]),
             }
@@ -69,6 +69,13 @@ def convert_food(info, history):
         "complex": complex,
         "state": state,
     }
+
+
+def subjects_to_str(subjects):
+    # [{'place_count': 17, 'place': 3, 'group_avg': 3.69, 'child_avg': 4.29, 'parallels_avg': 3.56, 'subject': 'Русский язык'}, ...]
+    return "\n".join(
+        [f"• {item['subject'].strip()}: {item['child_avg']}" for item in subjects]
+    )
 
 
 def monday(date):

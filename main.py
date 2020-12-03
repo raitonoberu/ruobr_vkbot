@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 import pytz
 import locale
 from config import DATABASE_URL, TOKEN, ID, TIMEZONE, FORCE_DATE
-from utils import marks_to_str, homework_to_str, monday, iso_to_string
+from utils import marks_to_str, homework_to_str, subjects_to_str, monday, iso_to_string
 import asyncio
 import api as ruobr_api
 import strings
@@ -66,10 +66,13 @@ async def login(event: bot.SimpleBotEvent):
                     raise Exception
                 user = children[child - 1]
             except:
-                await answer(event, f"Проверьте правильность написания номера ребёнка (число от 1 до {len(children)}).")
+                await answer(
+                    event,
+                    f"Проверьте правильность написания номера ребёнка (число от 1 до {len(children)}).",
+                )
                 return
         else:  # номер ребёнка не указан
-            text = "На аккаунте обнаружено несколько детей. Пожалуйста, выберите из списка ниже и добавьте номер через двоеточие (пример: \"войти логин:пароль:1\")\n"
+            text = 'На аккаунте обнаружено несколько детей. Пожалуйста, выберите из списка ниже и добавьте номер через двоеточие (пример: "войти логин:пароль:1")\n'
             i = 0
             for child in children:
                 i += 1
@@ -145,6 +148,29 @@ async def marks(event: bot.SimpleBotEvent):
         await answer(event, "Ваши оценки за неделю:\n" + marks_to_str(marks))
     else:
         await answer(event, "Вы не получали оценок за эту неделю.")
+
+
+@bot.message_handler(bot.text_filter(strings.PROGRESS))
+async def progress(event: bot.SimpleBotEvent):
+    vk_id = event.object.object.message.peer_id
+    user = await db.get_user(vk_id)
+    if not user:
+        await answer(event, "Вы не вошли.")
+        return
+    logging.info(str(vk_id) + " requested progress")
+    date = FORCE_DATE if FORCE_DATE else datetime.now(tz)
+    try:
+        progress = await ruobr_api.get_progress(user, date)
+    except ruobr_api.AuthenticationException:
+        await db.remove_user(user.vk_id)
+        return
+    if progress:
+        await answer(
+            event,
+            f"{progress['period_name']}\nСредний балл: {progress['child_avg']}\nМесто в классе: {progress['place']}\n\n{subjects_to_str(progress['subjects'])}",
+        )
+    else:
+        await answer(event, "У Вас нет оценок за текущий период.")
 
 
 @bot.message_handler(bot.text_filter(strings.HOMEWORK))
