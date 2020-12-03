@@ -57,13 +57,13 @@ async def get_mail(user):
             break
     if not letter:
         for i in mail:  # search for right letter
-            if i['id'] != -1:
+            if i["id"] != -1:
                 letter = i
                 break
     if not letter:  # no right letter
         return {}
 
-    letter['clean_text'] = letter['clean_text'].replace("&nbsp;", "")
+    letter["clean_text"] = letter["clean_text"].replace("&nbsp;", "")
     return letter
 
 
@@ -73,7 +73,7 @@ async def get_news(user):
     if not news:
         return {}
     new = news[0]
-    new['clean_text'] = new['clean_text'].replace("&nbsp;", "")
+    new["clean_text"] = new["clean_text"].replace("&nbsp;", "")
     return new
 
 
@@ -81,5 +81,5 @@ async def get_status(user):
     ruobr = AsyncRuobr(user.username, user.password)
     children = await ruobr.getChildren()
     for child in children:
-        if child['id'] == user.ruobr_id:
+        if child["id"] == user.ruobr_id:
             return child
