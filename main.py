@@ -112,6 +112,7 @@ async def unsubscribe(event: bot.SimpleBotEvent):
         return
     if user.status:  # пользователь подписан
         await db.update_status(vk_id, False)
+        await db.update_marks(vk_id, None)
         logging.info(str(vk_id) + " unsubscribed")
         await answer(event, "Вы отписались от обновлений оценок.")
     else:
