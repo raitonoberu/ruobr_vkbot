@@ -1,5 +1,4 @@
-ruobr_api
+ruobr_api==1.0.2
 vkwave
 pytz
 asyncpg
-httpx
