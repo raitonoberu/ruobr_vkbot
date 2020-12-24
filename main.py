@@ -167,7 +167,7 @@ async def controlmarks(event: bot.SimpleBotEvent):
     if len(controlmarks) != 0:
         await answer(
             event,
-            f"{controlmarks[-1]['title']}\n\n{chr(10).join([f'{subject}: {mark}' for subject, mark in controlmarks[-1]['marks']])}",
+            f"{controlmarks[-1]['title']}\n\n{chr(10).join([f'{subject}: {mark}' for subject, mark in controlmarks[-1]['marks'].items()])}",
             # should I use [0] instead of [-1]?
         )
     else:
