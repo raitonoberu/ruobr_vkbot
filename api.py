@@ -10,7 +10,7 @@ class AsyncRuobr(AsyncRuobr):
         while True:
             try:
                 return await super()._get(target)
-            except ConnectTimeout as e:
+            except ConnectTimeout:
                 logging.info("timeout, trying again")
 
 
@@ -19,6 +19,13 @@ async def get_marks(user, date1, date2):
     ruobr.user = {"id": user.ruobr_id}
     marks = await ruobr.getMarks(date1, date2)
     return convert_marks(marks)
+
+
+async def get_controlmarks(user):
+    ruobr = AsyncRuobr(user.username, user.password)
+    ruobr.user = {"id": user.ruobr_id}
+    controlmarks = await ruobr.getControlmarks()
+    return controlmarks
 
 
 async def get_progress(user, date):

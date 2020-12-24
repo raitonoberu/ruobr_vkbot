@@ -151,6 +151,28 @@ async def marks(event: bot.SimpleBotEvent):
         await answer(event, "Вы не получали оценок за эту неделю.")
 
 
+@bot.message_handler(bot.text_filter(strings.CONTROLMARKS))
+async def controlmarks(event: bot.SimpleBotEvent):
+    vk_id = event.object.object.message.peer_id
+    user = await db.get_user(vk_id)
+    if not user:
+        await answer(event, "Вы не вошли.")
+        return
+    logging.info(str(vk_id) + " requested controlmarks")
+    try:
+        controlmarks = await ruobr_api.get_controlmarks(user)
+    except ruobr_api.AuthenticationException:
+        await db.remove_user(user.vk_id)
+        return
+    if "marks" in controlmarks and len(controlmarks["marks"]) != 0:
+        await answer(
+            event,
+            f"{controlmarks['title']}\n\n{chr(10).join([f'{subject}: {mark}' for subject, mark in controlmarks['marks']])}",
+        )
+    else:
+        await answer(event, "У Вас нет итоговых оценок за текущий период.")
+
+
 @bot.message_handler(bot.text_filter(strings.PROGRESS))
 async def progress(event: bot.SimpleBotEvent):
     vk_id = event.object.object.message.peer_id
