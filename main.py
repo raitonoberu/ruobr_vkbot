@@ -164,10 +164,11 @@ async def controlmarks(event: bot.SimpleBotEvent):
     except ruobr_api.AuthenticationException:
         await db.remove_user(user.vk_id)
         return
-    if "marks" in controlmarks and len(controlmarks["marks"]) != 0:
+    if len(controlmarks) != 0:
         await answer(
             event,
-            f"{controlmarks['title']}\n\n{chr(10).join([f'{subject}: {mark}' for subject, mark in controlmarks['marks']])}",
+            f"{controlmarks[-1]['title']}\n\n{chr(10).join([f'{subject}: {mark}' for subject, mark in controlmarks[-1]['marks']])}",
+            # should I use [0] instead of [-1]?
         )
     else:
         await answer(event, "У Вас нет итоговых оценок за текущий период.")
