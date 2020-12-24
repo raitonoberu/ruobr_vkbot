@@ -32,6 +32,11 @@ def marks_to_str(marks):
     )
 
 
+def controlmarks_to_str(controlmarks):
+    # should I use [0] instead of [-1]?
+    return f"{controlmarks[-1]['title']}\n\n{chr(10).join([f'• {subject}: {mark}' for subject, mark in controlmarks[-1]['marks'].items()])}"
+
+
 def convert_homework(homework):
     # [{'task': {'title': 'Task_title', 'doc': False, 'requires_solutions': False, 'deadline': '2020-04-24', 'test_id': None, 'type': 'group', 'id': 99999999}, 'subject': 'Subject'}...]
     result = []

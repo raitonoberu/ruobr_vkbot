@@ -5,7 +5,14 @@ from datetime import datetime, timedelta
 import pytz
 import locale
 from config import DATABASE_URL, TOKEN, ID, TIMEZONE, FORCE_DATE
-from utils import marks_to_str, homework_to_str, subjects_to_str, monday, iso_to_string
+from utils import (
+    marks_to_str,
+    controlmarks_to_str,
+    homework_to_str,
+    subjects_to_str,
+    monday,
+    iso_to_string,
+)
 import asyncio
 import api as ruobr_api
 import strings
@@ -167,8 +174,7 @@ async def controlmarks(event: bot.SimpleBotEvent):
     if len(controlmarks) != 0:
         await answer(
             event,
-            f"{controlmarks[-1]['title']}\n\n{chr(10).join([f'{subject}: {mark}' for subject, mark in controlmarks[-1]['marks'].items()])}",
-            # should I use [0] instead of [-1]?
+            controlmarks_to_str(controlmarks),
         )
     else:
         await answer(event, "У Вас нет итоговых оценок за текущий период.")
