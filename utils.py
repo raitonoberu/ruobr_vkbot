@@ -26,10 +26,18 @@ def compare_marks(marks0, marks1):
     return result
 
 
-def marks_to_str(marks):
-    return "\n".join(
-        [f"{subject.strip()}: {', '.join(marks)}" for subject, marks in marks.items()]
-    )
+def marks_to_str(marks, date0, date1):
+    header = f"{date0.strftime('%d.%m')} -- {date1.strftime('%d.%m')}"
+    if marks:
+        marks = "\n".join(
+            [
+                f"{subject.strip()}: {', '.join(marks)}"
+                for subject, marks in marks.items()
+            ]
+        )
+    else:
+        marks = "Нет оценок за этот период."
+    return header + "\n\n" + marks
 
 
 def controlmarks_to_str(controlmarks):

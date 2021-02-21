@@ -1,7 +1,10 @@
 from vkwave.bots import SimpleLongPollBot
+from vkwave.bots.utils.keyboards import keyboard
 from db_access import Database
 from notifier import Notifier
 from datetime import datetime, timedelta
+import json
+from time import time
 import pytz
 import locale
 from config import DATABASE_URL, TOKEN, ID, TIMEZONE, FORCE_DATE
@@ -50,7 +53,8 @@ async def login(event: bot.SimpleBotEvent):
         login, password = loginpassword
         child = None
     else:
-        login, password, child = loginpassword  # родительский аккаунт
+        await answer(event, f'Пример: "{strings.LOGIN[0]} логин:пароль"')
+        return
 
     # авторизация
     ruobr = ruobr_api.AsyncRuobr(login, password)
@@ -66,26 +70,15 @@ async def login(event: bot.SimpleBotEvent):
 
     # обработка родительского аккаунта
     if len(children) > 1:
-        if child:  # номер ребёнка указан
-            try:
-                child = int(child)
-                if child < 1:
-                    raise Exception
-                user = children[child - 1]
-            except:
-                await answer(
-                    event,
-                    f"Проверьте правильность написания номера ребёнка (число от 1 до {len(children)}).",
-                )
-                return
-        else:  # номер ребёнка не указан
-            text = 'На аккаунте обнаружено несколько детей. Пожалуйста, выберите из списка ниже и добавьте номер через двоеточие (пример: "войти логин:пароль:1")\n'
-            i = 0
-            for child in children:
-                i += 1
-                text += f'\n{i} - {child.get("first_name")} {child.get("last_name")} {child["group"]}'
-            await answer(event, text)
-            return
+        text = "На аккаунте обнаружено несколько детей:\n"
+        i = 0
+        for child in children:
+            i += 1
+            text += f'\n{i}. {child.get("first_name")} {child.get("last_name")} {child["group"]}'
+        await answer(
+            event, text, keyboard=keyboards.children_kb(login, password, children)
+        )
+        return
     else:  # один ребёнок
         user = children[0]
 
@@ -146,16 +139,18 @@ async def marks(event: bot.SimpleBotEvent):
         await answer(event, "Вы не вошли.")
         return
     logging.info(str(vk_id) + " requested marks")
-    date = FORCE_DATE if FORCE_DATE else monday(datetime.now(tz))
+    date0 = FORCE_DATE if FORCE_DATE else monday(datetime.now(tz))
+    date1 = date0 + timedelta(days=6)
     try:
-        marks = await ruobr_api.get_marks(user, date, date + timedelta(days=6))
+        marks = await ruobr_api.get_marks(user, date0, date1)
     except ruobr_api.AuthenticationException:
         await db.remove_user(user.vk_id)
         return
-    if marks:
-        await answer(event, "Ваши оценки за неделю:\n" + marks_to_str(marks))
-    else:
-        await answer(event, "Вы не получали оценок за эту неделю.")
+    await answer(
+        event,
+        marks_to_str(marks, date0, date1),
+        keyboard=keyboards.marks_kb(user, date0, date1),
+    )
 
 
 @bot.message_handler(bot.text_filter(strings.CONTROLMARKS))
@@ -322,7 +317,81 @@ async def status(event: bot.SimpleBotEvent):
 
 @bot.message_handler(bot.text_filter(strings.COMMANDS))
 async def commands(event: bot.SimpleBotEvent):
-    await answer(event, strings.COMMANDS_TEXT)
+    await answer(event, strings.COMMANDS_TEXT, keyboard=keyboards.MAIN)
+
+
+# KEYBOARDS
+
+
+@bot.message_handler(bot.payload_filter(None))
+async def pl_keyboard(event: bot.SimpleBotEvent):
+    # payload keyboard
+    payload = json.loads(event.object.object.message.payload)
+    if "payload" in payload:  # keyboards that don't work on PC
+        return
+
+    vk_id = event.object.object.message.peer_id
+    user = await db.get_user(vk_id)
+
+    # children
+    if payload.get("type") == "children":
+        if user:
+            await answer(event, "Вы уже вошли.")
+            return
+
+        if time() - payload["time"] > 60:
+            await answer(event, "Время ожидания истекло.")
+            return
+
+        ruobr = ruobr_api.AsyncRuobr(payload["login"], payload["password"])
+        children = await ruobr.getChildren()
+        for user in children:
+            if user["id"] == payload["id"]:
+                break
+        name = user["first_name"] + " " + user["last_name"]
+        await db.add_user(
+            vk_id, payload["login"], payload["password"], name, user["id"]
+        )
+        await answer(event, "Вы вошли.", keyboard=keyboards.MAIN)
+        logging.info(str(vk_id) + " logged in")
+        return
+
+
+@bot.handler(bot.event_type_filter("message_event"))
+async def cb_keyboard(event: bot.SimpleBotEvent):
+    # callback keyboard
+    payload = event.object.object.payload
+    vk_id = event.object.object.peer_id
+    user = await db.get_user(vk_id)
+
+    if (
+        not user
+        or user.ruobr_id != int(payload.get("id"))
+        or time() - float(payload.get("time")) > 60 * 10
+    ):
+        return
+
+    # marks
+    if payload.get("type") == "marks":
+        date0 = datetime.fromisoformat(payload["date0"]) + timedelta(days=7) * int(
+            payload["direction"]
+        )
+        date1 = datetime.fromisoformat(payload["date1"]) + timedelta(days=7) * int(
+            payload["direction"]
+        )
+        try:
+            marks = await ruobr_api.get_marks(user, date0, date1)
+        except ruobr_api.AuthenticationException:
+            await db.remove_user(user.vk_id)
+            return
+
+        await event.api_ctx.messages.edit(
+            vk_id,
+            message=marks_to_str(marks, date0, date1),
+            conversation_message_id=event.object.object.conversation_message_id,
+            keyboard=keyboards.marks_kb(user, date0, date1),
+        )
+        await event.callback_answer(None)
 
 
 async def answer(event, text, keyboard=None):
