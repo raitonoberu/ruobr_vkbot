@@ -6,6 +6,10 @@ import asyncio
 
 
 class AsyncRuobr(AsyncRuobr):
+    def __init__(self, username, password):
+        super().__init__(username, password, True)
+        # TODO: use pydantic types
+
     async def _get(self, target):
         while True:
             try:
