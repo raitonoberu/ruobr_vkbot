@@ -215,7 +215,7 @@ async def homework(event: bot.SimpleBotEvent):
     if homework:
         await answer(event, "Домашние задания:\n" + homework_to_str(homework))
     else:
-        await answer(event, "Ничего не задано.")
+        await answer(event, "На ближайшие 2 недели ничего не задано.")
 
 
 @bot.message_handler(bot.text_filter(strings.FOOD))
