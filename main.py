@@ -406,6 +406,7 @@ async def cb_keyboard(event: bot.SimpleBotEvent):
             message=mail_to_str(mail),
             conversation_message_id=event.object.object.conversation_message_id,
             keyboard=keyboards.mail_kb(user, index),
+            dont_parse_links=True,
         )
         await event.callback_answer(None)
 

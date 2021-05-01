@@ -101,7 +101,12 @@ def convert_food(info, history):
     }
 
 
-def convert_mail(mail, index):
+def convert_mail(_mail, index):
+    mail = []
+    for i in _mail:
+        if i["id"] != -1:
+            mail.append(i)
+
     if index < len(mail):
         letter = mail[index]
         return {
@@ -115,7 +120,7 @@ def convert_mail(mail, index):
 
 
 def mail_to_str(letter):
-    return f"{letter['index'] + 1}/{letter['count']}\n\nДата: {iso_to_string(letter['date'])}\nТема: {letter['subject']}\nАвтор: {letter['author']}\n\n{letter['text']}"
+    return f"{letter['index'] + 1}/{letter['count']}\nДата: {iso_to_string(letter['date'])}\nТема: {letter['subject']}\nАвтор: {letter['author']}\n\n{letter['text']}"
 
 
 def subjects_to_str(subjects):
