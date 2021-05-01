@@ -1,5 +1,5 @@
 from ruobr_api import *
-from utils import convert_marks, convert_homework, convert_food
+from utils import convert_marks, convert_homework, convert_food, convert_mail
 import logging
 from httpx import ConnectTimeout
 import asyncio
@@ -55,27 +55,10 @@ async def get_food(user, date1, date2):
     return convert_food(info, history)
 
 
-async def get_mail(user):
+async def get_mail(user, index):
     ruobr = AsyncRuobr(user.username, user.password)
     mail = await ruobr.getMail()
-    if not mail:
-        return {}
-    letter = None
-    for i in mail:  # search for unread letter
-        if not i["read"]:
-            letter = i
-            await ruobr.readMessage(letter["id"])
-            break
-    if not letter:
-        for i in mail:  # search for right letter
-            if i["id"] != -1:
-                letter = i
-                break
-    if not letter:  # no right letter
-        return {}
-
-    letter["clean_text"] = letter["clean_text"].replace("&nbsp;", "")
-    return letter
+    return convert_mail(mail, index)
 
 
 async def get_news(user):

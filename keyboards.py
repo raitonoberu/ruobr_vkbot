@@ -43,12 +43,10 @@ def marks_kb(user, date0, date1):
 
 
 def mail_kb(user, index):
-    # TODO
     return _moving_kb(user, "mail", index=index)
 
 
 def news_kb(user, index):
-    # TODO
     return _moving_kb(user, "news", index=index)
 
 

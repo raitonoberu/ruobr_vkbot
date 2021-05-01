@@ -2,6 +2,24 @@ from datetime import datetime, timedelta
 from ruobr_api import Ruobr
 
 
+def monday(date):
+    while date.weekday() != 0:
+        date -= timedelta(days=1)
+    return date
+
+
+def iso_to_string(iso_date):
+    date = datetime.fromisoformat(iso_date)
+    return format_date(date)
+
+
+def format_date(datetime_date):
+    if datetime_date.hour:
+        return datetime_date.strftime("%d %b %Y %H:%M")
+    else:
+        return datetime_date.strftime("%d %b %Y")
+
+
 def convert_marks(marks):
     # {'Иностранный язык': [{'question_name': 'Ответ на уроке', 'question_id': 102494195, 'number': 1, 'question_type': 'Ответ на уроке', 'mark': '5'}], 'ОБЖ': [{'question_name': 'Ответ на уроке', 'question_id': 101356763, 'number': 1, 'question_type': 'Ответ на уроке', 'mark': '4'}]}
     marks = {key: [i["mark"] for i in marks[key]] for key in marks.keys()}
@@ -87,22 +105,25 @@ def convert_food(info, history):
     }
 
 
+def convert_mail(mail, index):
+    if index < len(mail):
+        letter = mail[index]
+        return {
+            "index": index,
+            "count": len(mail),
+            "date": letter["post_date"],
+            "subject": letter["subject"],
+            "author": letter["author"],
+            "text": letter["clean_text"].replace("&nbsp;", ""),
+        }
+
+
+def mail_to_str(letter):
+    return f"{letter['index'] + 1}/{letter['count']}\n\nДата: {format_date(letter['post_date'])}\nТема: {letter['subject']}\nАвтор: {letter['author']}\n\n{letter['text']}"
+
+
 def subjects_to_str(subjects):
     # [{'place_count': 17, 'place': 3, 'group_avg': 3.69, 'child_avg': 4.29, 'parallels_avg': 3.56, 'subject': 'Русский язык'}, ...]
     return "\n".join(
         [f"• {item['subject'].strip()}: {item['child_avg']}" for item in subjects]
     )
-
-
-def monday(date):
-    while date.weekday() != 0:
-        date -= timedelta(days=1)
-    return date
-
-
-def iso_to_string(iso_date):
-    date = datetime.fromisoformat(iso_date)
-    if date.hour:
-        return date.strftime("%d %b %Y %H:%M")
-    else:
-        return date.strftime("%d %b %Y")

@@ -14,6 +14,7 @@ from utils import (
     homework_to_str,
     subjects_to_str,
     monday,
+    mail_to_str,
     iso_to_string,
 )
 import asyncio
@@ -249,17 +250,14 @@ async def mail(event: bot.SimpleBotEvent):
         return
     logging.info(str(vk_id) + " requested mail")
     try:
-        letter = await ruobr_api.get_mail(user)
+        letter = await ruobr_api.get_mail(user, 0)
     except ruobr_api.AuthenticationException:
         await db.remove_user(user.vk_id)
         return
     if not letter:
         await answer(event, "Нет сообщений.")
         return
-    await answer(
-        event,
-        f"Последнее непрочитанное сообщение:\nДата: {iso_to_string(letter['post_date'])}\nТема: {letter['subject']}\nАвтор: {letter['author']}\n\n{letter['clean_text']}",
-    )
+    await answer(event, mail_to_str(letter))
 
 
 @bot.message_handler(bot.text_filter(strings.NEWS))
@@ -371,7 +369,6 @@ async def cb_keyboard(event: bot.SimpleBotEvent):
     ):
         return
 
-    # marks
     if payload.get("type") == "marks":
         date0 = datetime.fromisoformat(payload["date0"]) + timedelta(days=7) * int(
             payload["direction"]
@@ -393,6 +390,24 @@ async def cb_keyboard(event: bot.SimpleBotEvent):
         )
         await event.callback_answer(None)
 
+    if payload.get("type") == "mail":
+        index = int(payload["index"]) + int(payload["payload"]) 
+        try:
+            mail = await ruobr_api.get_mail(user, index)
+        except ruobr_api.AuthenticationException:
+            await db.remove_user(user.vk_id)
+            return
+        
+        if not mail:
+            return await event.callback_answer(None)
+
+        await event.api_ctx.messages.edit(
+            vk_id,
+            message=mail_to_str(mail),
+            conversation_message_id=event.object.object.conversation_message_id,
+            keyboard=keyboards.mail_kb(user, index),
+        )
+        await event.callback_answer(None)
 
 async def answer(event, text, keyboard=None):
     if len(text) > 4096:
