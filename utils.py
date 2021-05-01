@@ -119,7 +119,7 @@ def convert_mail(mail, index):
 
 
 def mail_to_str(letter):
-    return f"{letter['index'] + 1}/{letter['count']}\n\nДата: {format_date(letter['post_date'])}\nТема: {letter['subject']}\nАвтор: {letter['author']}\n\n{letter['text']}"
+    return f"{letter['index'] + 1}/{letter['count']}\n\nДата: {format_date(letter['date'])}\nТема: {letter['subject']}\nАвтор: {letter['author']}\n\n{letter['text']}"
 
 
 def subjects_to_str(subjects):
