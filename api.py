@@ -18,37 +18,37 @@ class AsyncRuobr(AsyncRuobr):
                 logging.info("timeout, trying again")
 
 
-async def get_marks(user, date1, date2):
+def get_ruobr(user):
     ruobr = AsyncRuobr(user.username, user.password)
-    ruobr.user = {"id": user.ruobr_id}
+    ruobr._children = [{"id": user.ruobr_id}]
+    return ruobr
+
+async def get_marks(user, date1, date2):
+    ruobr = get_ruobr(user)
     marks = await ruobr.getMarks(date1, date2)
     return convert_marks(marks)
 
 
 async def get_controlmarks(user):
-    ruobr = AsyncRuobr(user.username, user.password)
-    ruobr.user = {"id": user.ruobr_id}
+    ruobr = get_ruobr(user)
     controlmarks = await ruobr.getControlmarks()
     return controlmarks
 
 
 async def get_progress(user, date):
-    ruobr = AsyncRuobr(user.username, user.password)
-    ruobr.user = {"id": user.ruobr_id}
+    ruobr = get_ruobr(user)
     progress = await ruobr.getProgress(date)
     return progress
 
 
 async def get_homework(user, date1, date2):
-    ruobr = AsyncRuobr(user.username, user.password)
-    ruobr.user = {"id": user.ruobr_id}
+    ruobr = get_ruobr(user)
     homework = await ruobr.getHomework(date1, date2)
     return convert_homework(homework)
 
 
 async def get_food(user, date1, date2):
-    ruobr = AsyncRuobr(user.username, user.password)
-    ruobr.user = {"id": user.ruobr_id}
+    ruobr = get_ruobr(user)
     info, history = await asyncio.gather(
         ruobr.getFoodInfo(), ruobr.getFoodHistory(date1, date2)
     )
