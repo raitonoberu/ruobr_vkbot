@@ -257,7 +257,7 @@ async def mail(event: bot.SimpleBotEvent):
     if not letter:
         await answer(event, "Нет сообщений.")
         return
-    await answer(event, mail_to_str(letter))
+    await answer(event, mail_to_str(letter), keyboard=keyboards.mail_kb(user, 0))
 
 
 @bot.message_handler(bot.text_filter(strings.NEWS))
@@ -391,13 +391,13 @@ async def cb_keyboard(event: bot.SimpleBotEvent):
         await event.callback_answer(None)
 
     if payload.get("type") == "mail":
-        index = int(payload["index"]) + int(payload["payload"]) 
+        index = int(payload["index"]) + int(payload["direction"])
         try:
             mail = await ruobr_api.get_mail(user, index)
         except ruobr_api.AuthenticationException:
             await db.remove_user(user.vk_id)
             return
-        
+
         if not mail:
             return await event.callback_answer(None)
 
@@ -408,6 +408,7 @@ async def cb_keyboard(event: bot.SimpleBotEvent):
             keyboard=keyboards.mail_kb(user, index),
         )
         await event.callback_answer(None)
+
 
 async def answer(event, text, keyboard=None):
     if len(text) > 4096:
