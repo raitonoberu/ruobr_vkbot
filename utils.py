@@ -10,14 +10,10 @@ def monday(date):
 
 def iso_to_string(iso_date):
     date = datetime.fromisoformat(iso_date)
-    return format_date(date)
-
-
-def format_date(datetime_date):
-    if datetime_date.hour:
-        return datetime_date.strftime("%d %b %Y %H:%M")
+    if date.hour:
+        return date.strftime("%d %b %Y %H:%M")
     else:
-        return datetime_date.strftime("%d %b %Y")
+        return date.strftime("%d %b %Y")
 
 
 def convert_marks(marks):
@@ -119,7 +115,7 @@ def convert_mail(mail, index):
 
 
 def mail_to_str(letter):
-    return f"{letter['index'] + 1}/{letter['count']}\n\nДата: {format_date(letter['date'])}\nТема: {letter['subject']}\nАвтор: {letter['author']}\n\n{letter['text']}"
+    return f"{letter['index'] + 1}/{letter['count']}\n\nДата: {iso_to_string(letter['date'])}\nТема: {letter['subject']}\nАвтор: {letter['author']}\n\n{letter['text']}"
 
 
 def subjects_to_str(subjects):
