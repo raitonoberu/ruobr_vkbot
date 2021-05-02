@@ -1,5 +1,5 @@
 from ruobr_api import *
-from utils import convert_marks, convert_homework, convert_food, convert_mail
+from utils import convert_marks, convert_homework, convert_food, convert_mail, convert_news
 import logging
 from httpx import ConnectTimeout
 import asyncio
@@ -62,14 +62,10 @@ async def get_mail(user, index):
     return convert_mail(mail, index)
 
 
-async def get_news(user):
+async def get_news(user, index):
     ruobr = AsyncRuobr(user.username, user.password)
     news = await ruobr.getNews()
-    if not news:
-        return {}
-    new = news[0]
-    new["clean_text"] = new["clean_text"].replace("&nbsp;", "")
-    return new
+    return convert_news(news, index)
 
 
 async def get_status(user):

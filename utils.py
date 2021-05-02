@@ -121,6 +121,22 @@ def mail_to_str(letter):
     return f"{letter['index'] + 1}/{letter['count']}\nДата: {iso_to_string(letter['date'])}\nТема: {letter['subject']}\nАвтор: {letter['author']}\n\n{letter['text']}"
 
 
+def convert_news(news, index):
+    if index < len(news):
+        new = news[index]
+        return {
+            "index": index,
+            "count": len(news),
+            "title": new["title"],
+            "date": new["date"],
+            "text": new["clean_text"].replace("&nbsp;", ""),
+        }
+
+
+def news_to_str(new):
+    return f"{new['index'] + 1}/{new['count']}\nЗаголовок: {new['title']}\nДата: {iso_to_string(new['date'])}\n\n{new['text']}"
+
+
 def subjects_to_str(subjects):
     # [{'place_count': 17, 'place': 3, 'group_avg': 3.69, 'child_avg': 4.29, 'parallels_avg': 3.56, 'subject': 'Русский язык'}, ...]
     return "\n".join(

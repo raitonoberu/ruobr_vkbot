@@ -15,7 +15,7 @@ from utils import (
     subjects_to_str,
     monday,
     mail_to_str,
-    iso_to_string,
+    news_to_str,
 )
 import asyncio
 import api as ruobr_api
@@ -269,16 +269,17 @@ async def news(event: bot.SimpleBotEvent):
         return
     logging.info(str(vk_id) + " requested news")
     try:
-        new = await ruobr_api.get_news(user)
+        news = await ruobr_api.get_news(user, 0)
     except ruobr_api.AuthenticationException:
         await db.remove_user(user.vk_id)
         return
-    if not new:
+    if not news:
         await answer(event, "Нет новостей.")
         return
     await answer(
         event,
-        f"Последняя новость:\nЗаголовок: {new['title']}\nДата: {iso_to_string(new['date'])}\n\n{new['clean_text']}",
+        news_to_str(news),
+        keyboard=keyboards.news_kb(user, 0),
     )
 
 
@@ -409,6 +410,29 @@ async def cb_keyboard(event: bot.SimpleBotEvent):
             message=mail_to_str(mail),
             conversation_message_id=event.object.object.conversation_message_id,
             keyboard=keyboards.mail_kb(user, index),
+            dont_parse_links=True,
+        )
+        await event.callback_answer(None)
+
+    if payload.get("type") == "news":
+        index = int(payload["index"]) + int(payload["direction"])
+        if index < 0:
+            return await event.callback_answer(None)
+
+        try:
+            news = await ruobr_api.get_news(user, index)
+        except ruobr_api.AuthenticationException:
+            await db.remove_user(user.vk_id)
+            return
+
+        if not news:
+            return await event.callback_answer(None)
+
+        await event.api_ctx.messages.edit(
+            vk_id,
+            message=news_to_str(news),
+            conversation_message_id=event.object.object.conversation_message_id,
+            keyboard=keyboards.news_kb(user, index),
             dont_parse_links=True,
         )
         await event.callback_answer(None)
