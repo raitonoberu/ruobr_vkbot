@@ -1,4 +1,4 @@
-ruobr_api==1.0.2
+ruobr_api==1.2.1
 vkwave
 pytz
 asyncpg

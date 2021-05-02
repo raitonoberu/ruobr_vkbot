@@ -23,7 +23,7 @@ class Notifier(object):
             try:
                 users = await self.db.get_users()
                 tasks = [self.check_user(user) for user in users]
-                marks = await asyncio.gather(*tasks)
+                await asyncio.gather(*tasks)
                 await asyncio.sleep(WAIT_IN_MINS * 60)
             except:
                 logging.exception("")
