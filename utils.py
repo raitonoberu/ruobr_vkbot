@@ -107,7 +107,7 @@ def convert_mail(_mail, index):
         if i["id"] != -1:
             mail.append(i)
 
-    if index < len(mail) and index >= 0:
+    if index < len(mail):
         letter = mail[index]
         return {
             "index": index,

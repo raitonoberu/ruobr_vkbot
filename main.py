@@ -392,6 +392,9 @@ async def cb_keyboard(event: bot.SimpleBotEvent):
 
     if payload.get("type") == "mail":
         index = int(payload["index"]) + int(payload["direction"])
+        if index < 0:
+            return await event.callback_answer(None)
+
         try:
             mail = await ruobr_api.get_mail(user, index)
         except ruobr_api.AuthenticationException:
