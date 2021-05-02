@@ -147,7 +147,6 @@ async def marks(event: bot.SimpleBotEvent):
     except ruobr_api.AuthenticationException:
         await db.remove_user(user.vk_id)
         return
-    logging.info(marks)
     await answer(
         event,
         marks_to_str(marks, date0, date1),
