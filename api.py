@@ -21,6 +21,7 @@ class AsyncRuobr(AsyncRuobr):
 def get_ruobr(user):
     ruobr = AsyncRuobr(user.username, user.password)
     ruobr._children = [{"id": user.ruobr_id}]
+    ruobr.isAuthorized = True
     return ruobr
 
 async def get_marks(user, date1, date2):
