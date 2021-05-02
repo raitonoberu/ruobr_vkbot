@@ -18,8 +18,7 @@ def iso_to_string(iso_date):
 
 def convert_marks(marks):
     # {'Иностранный язык': [{'question_name': 'Ответ на уроке', 'question_id': 102494195, 'number': 1, 'question_type': 'Ответ на уроке', 'mark': '5'}], 'ОБЖ': [{'question_name': 'Ответ на уроке', 'question_id': 101356763, 'number': 1, 'question_type': 'Ответ на уроке', 'mark': '4'}]}
-    marks = {key: [i["mark"] for i in marks[key]] for key in marks.keys()}
-    return marks
+    return {key: [i["mark"] for i in marks[key]] for key in marks.keys()}
     # [{'Иностранный язык': ['5'], 'ОБЖ': ['4']}]
 
 
@@ -42,13 +41,13 @@ def compare_marks(marks0, marks1):
 
 def marks_to_str(marks, date0=None, date1=None):
     if date0 is not None:
-        header = f"{date0.strftime('%d.%m')} -- {date1.strftime('%d.%m')}\n\n"
+        header = f"{date0.strftime('%d.%m')} -- {date1.strftime('%d.%m')}\n"
     else:
         header = ""
     if marks:
         marks = "\n".join(
             [
-                f"{subject.strip()}: {', '.join(marks)}"
+                f"• {subject.strip()}: {', '.join(marks)}"
                 for subject, marks in marks.items()
             ]
         )
@@ -58,7 +57,6 @@ def marks_to_str(marks, date0=None, date1=None):
 
 
 def controlmarks_to_str(controlmarks):
-    # should I use [0] instead of [-1]?
     return f"{controlmarks[-1]['title']}\n\n{chr(10).join([f'• {subject}: {mark}' for subject, mark in controlmarks[-1]['marks'].items()])}"
 
 
