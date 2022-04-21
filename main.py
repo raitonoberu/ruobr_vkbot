@@ -1,5 +1,4 @@
 from vkwave.bots import SimpleLongPollBot
-from vkwave.bots.utils.keyboards import keyboard
 from db_access import Database
 from notifier import Notifier
 from datetime import datetime, timedelta
@@ -9,13 +8,13 @@ import pytz
 import locale
 from config import DATABASE_URL, TOKEN, ID, TIMEZONE, FORCE_DATE
 from utils import (
+    food_to_str,
     marks_to_str,
     controlmarks_to_str,
     homework_to_str,
-    subjects_to_str,
+    progress_to_str,
     monday,
     mail_to_str,
-    news_to_str,
 )
 import asyncio
 import api as ruobr_api
@@ -60,7 +59,7 @@ async def login(event: bot.SimpleBotEvent):
     # авторизация
     ruobr = ruobr_api.AsyncRuobr(login, password)
     try:
-        children = await ruobr.getChildren()
+        children = await ruobr.get_children()
     except ruobr_api.AuthenticationException:
         await answer(event, "Проверьте логин и/или пароль.")
         return
@@ -167,11 +166,8 @@ async def controlmarks(event: bot.SimpleBotEvent):
     except ruobr_api.AuthenticationException:
         await db.remove_user(user.vk_id)
         return
-    if len(controlmarks) != 0:
-        await answer(
-            event,
-            controlmarks_to_str(controlmarks),
-        )
+    if controlmarks:
+        await answer(event, controlmarks_to_str(controlmarks))
     else:
         await answer(event, "У Вас нет итоговых оценок за текущий период.")
 
@@ -186,15 +182,12 @@ async def progress(event: bot.SimpleBotEvent):
     logging.info(str(vk_id) + " requested progress")
     date = FORCE_DATE if FORCE_DATE else datetime.now(tz)
     try:
-        progress = await ruobr_api.get_progress(user, date)
+        progress = await ruobr_api.get_progress(user)
     except ruobr_api.AuthenticationException:
         await db.remove_user(user.vk_id)
         return
     if progress:
-        await answer(
-            event,
-            f"{progress['period_name']}\nСредний балл: {progress['child_avg']}\nМесто в классе: {progress['place']}\n\n{subjects_to_str(progress['subjects'])}",
-        )
+        await answer(event, progress_to_str(progress))
     else:
         await answer(event, "У Вас нет оценок за текущий период.")
 
@@ -229,16 +222,14 @@ async def food(event: bot.SimpleBotEvent):
     logging.info(str(vk_id) + " requested food")
     date = FORCE_DATE if FORCE_DATE else datetime.now(tz)
     try:
-        food = await ruobr_api.get_food(user, date, date)
+        food = await ruobr_api.get_food(user, date)
     except ruobr_api.AuthenticationException:
         await db.remove_user(user.vk_id)
         return
-    ordered = (
-        f"На сегодня заказано: {food['complex']}\nСтатус заказа: {food['state']}"
-        if food["complex"]
-        else "На сегодня ничего не заказано."
-    )
-    await answer(event, f"Ваш баланс: {food['balance']} руб.\n{ordered}")
+    if not food:
+        await answer(event, "Нет информации о питании.")
+        return
+    await answer(event, food_to_str(food))
 
 
 @bot.message_handler(bot.text_filter(strings.MAIL))
@@ -258,29 +249,6 @@ async def mail(event: bot.SimpleBotEvent):
         await answer(event, "Нет сообщений.")
         return
     await answer(event, mail_to_str(letter), keyboard=keyboards.mail_kb(user, 0))
-
-
-@bot.message_handler(bot.text_filter(strings.NEWS))
-async def news(event: bot.SimpleBotEvent):
-    vk_id = event.object.object.message.peer_id
-    user = await db.get_user(vk_id)
-    if not user:
-        await answer(event, "Вы не вошли.")
-        return
-    logging.info(str(vk_id) + " requested news")
-    try:
-        news = await ruobr_api.get_news(user, 0)
-    except ruobr_api.AuthenticationException:
-        await db.remove_user(user.vk_id)
-        return
-    if not news:
-        await answer(event, "Нет новостей.")
-        return
-    await answer(
-        event,
-        news_to_str(news),
-        keyboard=keyboards.news_kb(user, 0),
-    )
 
 
 @bot.message_handler(bot.text_filter(strings.STATUS))
@@ -343,7 +311,7 @@ async def pl_keyboard(event: bot.SimpleBotEvent):
             return
 
         ruobr = ruobr_api.AsyncRuobr(payload["login"], payload["password"])
-        children = await ruobr.getChildren()
+        children = await ruobr.get_children()
         for user in children:
             if user["id"] == payload["id"]:
                 break
@@ -410,29 +378,6 @@ async def cb_keyboard(event: bot.SimpleBotEvent):
             message=mail_to_str(mail),
             conversation_message_id=event.object.object.conversation_message_id,
             keyboard=keyboards.mail_kb(user, index),
-            dont_parse_links=True,
-        )
-        await event.callback_answer(None)
-
-    if payload.get("type") == "news":
-        index = int(payload["index"]) + int(payload["direction"])
-        if index < 0:
-            return await event.callback_answer(None)
-
-        try:
-            news = await ruobr_api.get_news(user, index)
-        except ruobr_api.AuthenticationException:
-            await db.remove_user(user.vk_id)
-            return
-
-        if not news:
-            return await event.callback_answer(None)
-
-        await event.api_ctx.messages.edit(
-            vk_id,
-            message=news_to_str(news),
-            conversation_message_id=event.object.object.conversation_message_id,
-            keyboard=keyboards.news_kb(user, index),
             dont_parse_links=True,
         )
         await event.callback_answer(None)

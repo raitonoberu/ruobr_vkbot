@@ -1,15 +1,17 @@
 from ruobr_api import *
-from utils import convert_marks, convert_homework, convert_food, convert_mail, convert_news
+from utils import (
+    convert_controlmarks,
+    convert_marks,
+    convert_homework,
+    convert_food,
+    convert_mail,
+    convert_progress,
+)
 import logging
 from httpx import ConnectTimeout
-import asyncio
 
 
 class AsyncRuobr(AsyncRuobr):
-    def __init__(self, username, password):
-        super().__init__(username, password, True)
-        # TODO: use pydantic types
-
     async def _get(self, target):
         while True:
             try:
@@ -21,56 +23,60 @@ class AsyncRuobr(AsyncRuobr):
 def get_ruobr(user):
     ruobr = AsyncRuobr(user.username, user.password)
     ruobr._children = [{"id": user.ruobr_id}]
-    ruobr.isAuthorized = True
+    ruobr.is_authorized = True
     return ruobr
+
 
 async def get_marks(user, date1, date2):
     ruobr = get_ruobr(user)
-    marks = await ruobr.getMarks(date1, date2)
-    return convert_marks(marks)
+    timetable = await ruobr.get_timetable(date1, date2)
+    return convert_marks(timetable)
 
 
 async def get_controlmarks(user):
     ruobr = get_ruobr(user)
-    controlmarks = await ruobr.getControlmarks()
-    return controlmarks
+    controlmarks = await ruobr.get_control_marks()
+    return convert_controlmarks(controlmarks)
 
 
-async def get_progress(user, date):
+async def get_progress(user):
     ruobr = get_ruobr(user)
-    progress = await ruobr.getProgress(date)
-    return progress
+    controlmarks = await ruobr.get_control_marks()
+    return convert_progress(controlmarks)
 
 
 async def get_homework(user, date1, date2):
     ruobr = get_ruobr(user)
-    homework = await ruobr.getHomework(date1, date2)
-    return convert_homework(homework)
+    timetable = await ruobr.get_timetable(date1, date2)
+    return convert_homework(timetable)
 
 
-async def get_food(user, date1, date2):
-    ruobr = get_ruobr(user)
-    info, history = await asyncio.gather(
-        ruobr.getFoodInfo(), ruobr.getFoodHistory(date1, date2)
-    )
-    return convert_food(info, history)
+async def get_food(user, date):
+    # здесь нам нужны доп параметры, получаем юзера
+    ruobr = AsyncRuobr(user.username, user.password)
+    index = 0
+    children = await ruobr.get_children()
+    for i in range(len(children)):
+        if children[i]["id"] == user.ruobr_id:
+            index = i
+            break
+    ruobr.child = index
+
+    food = await ruobr.get_food_info(date)
+    if not food:
+        return None
+    return convert_food(food, date)
 
 
 async def get_mail(user, index):
-    ruobr = AsyncRuobr(user.username, user.password)
-    mail = await ruobr.getMail()
+    ruobr = get_ruobr(user)
+    mail = await ruobr.get_mail()
     return convert_mail(mail, index)
-
-
-async def get_news(user, index):
-    ruobr = AsyncRuobr(user.username, user.password)
-    news = await ruobr.getNews()
-    return convert_news(news, index)
 
 
 async def get_status(user):
     ruobr = AsyncRuobr(user.username, user.password)
-    children = await ruobr.getChildren()
+    children = await ruobr.get_children()
     for child in children:
         if child["id"] == user.ruobr_id:
             return child

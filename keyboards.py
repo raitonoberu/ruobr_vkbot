@@ -46,10 +46,6 @@ def mail_kb(user, index):
     return _moving_kb(user, "mail", index=index)
 
 
-def news_kb(user, index):
-    return _moving_kb(user, "news", index=index)
-
-
 # нижняя клавиатура
 MAIN = """
 {
@@ -100,7 +96,7 @@ MAIN = """
       {
         "action": {
           "type": "text",
-          "label": "Новости",
+          "label": "Итоги",
           "payload": ""
         },
         "color": "secondary"

@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
-from ruobr_api import Ruobr
+import re
+from collections import defaultdict
 
 
 def monday(date):
@@ -16,10 +17,14 @@ def iso_to_string(iso_date):
         return date.strftime("%d %b %Y")
 
 
-def convert_marks(marks):
-    # {'Иностранный язык': [{'question_name': 'Ответ на уроке', 'question_id': 102494195, 'number': 1, 'question_type': 'Ответ на уроке', 'mark': '5'}], 'ОБЖ': [{'question_name': 'Ответ на уроке', 'question_id': 101356763, 'number': 1, 'question_type': 'Ответ на уроке', 'mark': '4'}]}
-    return {key: [i["mark"] for i in marks[key]] for key in marks.keys()}
+def convert_marks(timetable):
+    marks = defaultdict(list)
+    for lesson in timetable:
+        if "marks" in lesson:
+            for mark in lesson["marks"]:
+                marks[lesson["subject"]].append(mark["mark"])
     # [{'Иностранный язык': ['5'], 'ОБЖ': ['4']}]
+    return marks
 
 
 def compare_marks(marks0, marks1):
@@ -56,64 +61,117 @@ def marks_to_str(marks, date0=None, date1=None):
     return header + marks
 
 
-def controlmarks_to_str(controlmarks):
-    return f"{controlmarks[-1]['title']}\n\n{chr(10).join([f'• {subject}: {mark}' for subject, mark in controlmarks[-1]['marks'].items()])}"
+def convert_controlmarks(controlmarks):
+    period = None
+    for p in controlmarks:
+        if p["marks_future"] == 0:
+            period = p
+            break
+    return period
 
 
-def convert_homework(homework):
-    # [{'task': {'title': 'Task_title', 'doc': False, 'requires_solutions': False, 'deadline': '2020-04-24', 'test_id': None, 'type': 'group', 'id': 99999999}, 'subject': 'Subject'}...]
+def controlmarks_to_str(period):
+    return (
+        period["title"]
+        + "\n\n"
+        + "\n".join([f"• {m['subject_name']}: {m['mark']}" for m in period["marks"]])
+    )
+
+
+def convert_homework(timetable):
     result = []
-    for item in homework:
-        result.append(
-            {
-                "title": item["task"]["title"],
-                "subject": item["subject"].strip(),
-                "date": iso_to_string(item["task"]["deadline"]),
-                "url": Ruobr.getHomeworkById(item["task"]["id"]),
-            }
-        )
+    for lesson in timetable:
+        if "task" not in lesson:
+            continue
+        for task in lesson["task"]:
+            result.append(
+                {
+                    "title": task["title"].strip(),
+                    "subject": lesson["subject"].strip(),
+                    "date": iso_to_string(task["deadline"]),
+                    # "url": Ruobr.getHomeworkById(item["task"]["id"]),
+                }
+            )
+    # [{'title': 'Task_title', 'subject': 'Subject', 'date': '2020-04-24'}...]
     return result
-    # [{'title': 'Task_title', 'subject': 'Subject', 'date': '2020-04-24', 'url': 'http://url'}...]
 
 
 def homework_to_str(homework):
     return "\n\n".join(
-        [
-            f"• {item['subject']} ({item['date']}):\n{item['title']}\nПодробнее: {item['url']}"
-            for item in homework
-        ]
+        [f"• {item['subject']} ({item['date']}):\n{item['title']}" for item in homework]
     )
 
 
-def convert_food(info, history):
-    if history:
-        complex = history[0]["complex__name"]
-        state = history[0]["state_str"]
-    else:
-        complex = None
-        state = None
+def convert_food(food, date: datetime):
+    balance = food["balance"]
+    complex = None
+    dishes = None
+    state = None
+
+    if food["vizit"]:
+        day = None
+        date_str = date.strftime("%Y-%m-%d")
+        for d in food["vizit"]:
+            if d["date"] == date_str:
+                day = d
+                break
+        if day:
+            if "ordered_complex" in day:
+                complex = day["ordered_complex"]
+            elif "complex" in day:
+                complex = day["complex"]
+
+            if len(day["dishes"]) != 0:
+                dishes = "\n".join(["• " + d["text"] for d in day["dishes"]])
+            elif len(day["qs_unit"]) != 0:
+                dishes = "\n".join([q["about"] for q in day["qs_unit"]])
+
+            if "state_str" in day:
+                state = day["state_str"]
+
     return {
-        "balance": round(int(info["balance"]) / 100, 1),
+        "balance": balance,
         "complex": complex,
+        "dishes": dishes,
         "state": state,
     }
+
+
+def food_to_str(food):
+    answer = "Ваш баланс: " + food["balance"] + " руб.\n"
+    if food["complex"] != None:
+        answer += "На сегодня заказано: " + food["complex"]
+        if food["dishes"]:
+            answer += "\n\n" + food["dishes"]
+        if food["state"]:
+            answer += "\n\nСтатус: " + food["state"]
+    else:
+        answer += "На сегодня ничего не заказано."
+    return answer
 
 
 def convert_mail(_mail, index):
     mail = []
     for i in _mail:
-        if i["id"] != -1:
+        if i["author_id"] not in (-1, 1):
+            # убрать эти надоедливые "ВНИМАНИЕ! Не прыгай под колёса!"
             mail.append(i)
 
     if index < len(mail):
         letter = mail[index]
+
+        if letter["type_id"] != 2:
+            text = letter["clean_text"].replace("&nbsp;", "")
+        else:
+            # убрать html теги
+            text = re.sub(r"<[^>]*>", "", letter["last_msg_text"])
         return {
             "index": index,
             "count": len(mail),
             "date": letter["post_date"],
             "subject": letter["subject"],
             "author": letter["author"],
-            "text": letter["clean_text"].replace("&nbsp;", ""),
+            "text": text,
         }
 
 
@@ -121,24 +179,29 @@ def mail_to_str(letter):
     return f"{letter['index'] + 1}/{letter['count']}\nДата: {iso_to_string(letter['date'])}\nТема: {letter['subject']}\nАвтор: {letter['author']}\n\n{letter['text']}"
 
 
-def convert_news(news, index):
-    if index < len(news):
-        new = news[index]
-        return {
-            "index": index,
-            "count": len(news),
-            "title": new["title"],
-            "date": new["date"],
-            "text": new["clean_text"].replace("&nbsp;", ""),
-        }
+def convert_progress(controlmarks):
+    period = None
+    for p in controlmarks:
+        if p["marks_future"] == 1:
+            period = p
+            break
+    return period
 
 
-def news_to_str(new):
-    return f"{new['index'] + 1}/{new['count']}\nЗаголовок: {new['title']}\nДата: {iso_to_string(new['date'])}\n\n{new['text']}"
+def progress_to_str(period):
+    # посчитаем средний балл
+    cnt = 0
+    sm = 0
+    for m in period["marks"]:
+        if m["mark"] != 0.0:
+            cnt += 1
+            sm += m["mark"]
+    avg = round(sm / cnt, 2) if cnt != 0 else 0
 
-
-def subjects_to_str(subjects):
-    # [{'place_count': 17, 'place': 3, 'group_avg': 3.69, 'child_avg': 4.29, 'parallels_avg': 3.56, 'subject': 'Русский язык'}, ...]
-    return "\n".join(
-        [f"• {item['subject'].strip()}: {item['child_avg']}" for item in subjects]
+    return f"{period['title']}\nСредний балл: {avg}\n\n" + "\n".join(
+        [
+            f"• {item['subject_name'].strip()}: {item['mark']}"
+            for item in period["marks"]
+            if item["mark"] != 0.0
+        ]
     )
