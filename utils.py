@@ -161,7 +161,8 @@ def convert_mail(_mail, index):
         letter = mail[index]
 
         if letter["type_id"] != 2:
-            text = letter["clean_text"].replace("&nbsp;", "")
+            key = "last_msg_text" if "last_msg_text" in letter else "clean_text"
+            text = letter[key].replace("&nbsp;", "")
         else:
             # убрать html теги
             text = re.sub(r"<[^>]*>", "", letter["last_msg_text"])
