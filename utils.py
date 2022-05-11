@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
-import re
 from collections import defaultdict
+import copy
+import re
 
 
 def monday(date):
@@ -30,7 +31,7 @@ def convert_marks(timetable):
 def compare_marks(marks0, marks1):
     if marks0 == marks1:
         return {}
-    result = marks1.copy()
+    result = copy.deepcopy(marks1)
     for subject, marks in marks0.items():
         try:
             if marks == marks1[subject]:
