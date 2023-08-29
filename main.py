@@ -5,7 +5,6 @@ from datetime import datetime, timedelta
 import json
 from time import time
 import pytz
-import locale
 from config import POSTGRES_USER, POSTGRES_PASSWORD, VK_TOKEN, VK_ID, TIMEZONE
 from utils import (
     food_to_str,
@@ -26,7 +25,6 @@ logging.basicConfig(level=logging.INFO)
 
 db = Database(POSTGRES_USER, POSTGRES_PASSWORD)
 tz = pytz.timezone(TIMEZONE)
-locale.setlocale(locale.LC_ALL, "ru_RU")
 
 bot = SimpleLongPollBot(tokens=VK_TOKEN, group_id=VK_ID)
 

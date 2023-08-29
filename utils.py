@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from collections import defaultdict
+import strings
 import copy
 import re
 
@@ -13,9 +14,9 @@ def monday(date):
 def iso_to_string(iso_date):
     date = datetime.fromisoformat(iso_date)
     if date.hour:
-        return date.strftime("%d %b %Y %H:%M")
+        return date.strftime(f"%-d {strings.MONTHS[date.month-1]} %H:%M")
     else:
-        return date.strftime("%d %b %Y")
+        return date.strftime(f"%-d {strings.MONTHS[date.month-1]}")
 
 
 def convert_marks(timetable):
