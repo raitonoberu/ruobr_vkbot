@@ -9,10 +9,10 @@ def children_kb(login, password, children):
             i + 1,
             payload={
                 "type": "children",
-                "id": child["id"],
+                "id": str(child["id"]),
                 "login": login,
                 "password": password,
-                "time": time(),
+                "time": str(time()),
             },
         )
     return kb.get_keyboard()
@@ -22,13 +22,13 @@ def _moving_kb(user, type, **args):
     kb = Keyboard(one_time=True, inline=True)
     pl1 = {
         "type": type,
-        "direction": -1,
-        "id": user.ruobr_id,
-        "time": time(),
+        "direction": "-1",
+        "id": str(user.ruobr_id),
+        "time": str(time()),
     }
     pl1.update(args)
     pl2 = pl1.copy()
-    pl2["direction"] = 1
+    pl2["direction"] = "1"
 
     kb.add_callback_button("<", payload=pl1)
     kb.add_callback_button(">", payload=pl2)
@@ -43,7 +43,7 @@ def marks_kb(user, date0, date1):
 
 
 def mail_kb(user, index):
-    return _moving_kb(user, "mail", index=index)
+    return _moving_kb(user, "mail", index=str(index))
 
 
 # нижняя клавиатура

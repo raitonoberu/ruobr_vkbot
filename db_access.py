@@ -1,5 +1,4 @@
 import asyncpg
-import ssl
 from collections import namedtuple
 
 User = namedtuple("User", "vk_id username password name ruobr_id marks status")
@@ -19,20 +18,18 @@ CREATE TABLE "USERS"
 ALTER TABLE "USERS" ADD CONSTRAINT PK_USERS
   PRIMARY KEY (VK_ID);
 """
-# https://stackoverflow.com/questions/62053185/asyncpg-error-no-pg-hba-conf-entry-for-host-in-heroku
-ssl_object = ssl.create_default_context(capath="cert.pem")
-ssl_object.check_hostname = False
-ssl_object.verify_mode = ssl.CERT_NONE
 
 
 class Database(object):
     """Доступ к базе данных пользователей"""
 
-    def __init__(self, database):
-        self.database = database
+    def __init__(self, username, password):
+        self.username = username
+        self.password = password
 
     async def connect(self):
-        self.pool = await asyncpg.create_pool(self.database, ssl=ssl_object)
+        dsn = f"postgres://{self.username}:{self.password}@db:5432/ruobr-db"
+        self.pool = await asyncpg.create_pool(dsn)
 
     async def close(self):
         await self.pool.close()

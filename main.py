@@ -6,7 +6,7 @@ import json
 from time import time
 import pytz
 import locale
-from config import DATABASE_URL, TOKEN, ID, TIMEZONE, FORCE_DATE
+from config import POSTGRES_USER, POSTGRES_PASSWORD, VK_TOKEN, VK_ID, TIMEZONE
 from utils import (
     food_to_str,
     marks_to_str,
@@ -24,11 +24,11 @@ import logging
 
 logging.basicConfig(level=logging.INFO)
 
-db = Database(DATABASE_URL)
+db = Database(POSTGRES_USER, POSTGRES_PASSWORD)
 tz = pytz.timezone(TIMEZONE)
 locale.setlocale(locale.LC_ALL, "ru_RU")
 
-bot = SimpleLongPollBot(tokens=TOKEN, group_id=ID)
+bot = SimpleLongPollBot(tokens=VK_TOKEN, group_id=VK_ID)
 
 
 @bot.message_handler(bot.text_contains_filter(strings.LOGIN))
@@ -139,7 +139,7 @@ async def marks(event: bot.SimpleBotEvent):
         await answer(event, "Вы не вошли.")
         return
     logging.info(str(vk_id) + " requested marks")
-    date0 = FORCE_DATE if FORCE_DATE else monday(datetime.now(tz))
+    date0 = monday(datetime.now(tz))
     date1 = date0 + timedelta(days=6)
     try:
         marks = await ruobr_api.get_marks(user, date0, date1)
@@ -180,7 +180,6 @@ async def progress(event: bot.SimpleBotEvent):
         await answer(event, "Вы не вошли.")
         return
     logging.info(str(vk_id) + " requested progress")
-    date = FORCE_DATE if FORCE_DATE else datetime.now(tz)
     try:
         progress = await ruobr_api.get_progress(user)
     except ruobr_api.AuthenticationException:
@@ -200,7 +199,7 @@ async def homework(event: bot.SimpleBotEvent):
         await answer(event, "Вы не вошли.")
         return
     logging.info(str(vk_id) + " requested homework")
-    date = FORCE_DATE if FORCE_DATE else datetime.now(tz)
+    date = datetime.now(tz)
     try:
         homework = await ruobr_api.get_homework(user, date, date + timedelta(days=14))
     except ruobr_api.AuthenticationException:
@@ -220,7 +219,7 @@ async def food(event: bot.SimpleBotEvent):
         await answer(event, "Вы не вошли.")
         return
     logging.info(str(vk_id) + " requested food")
-    date = FORCE_DATE if FORCE_DATE else datetime.now(tz)
+    date = datetime.now(tz)
     try:
         food = await ruobr_api.get_food(user, date)
     except ruobr_api.AuthenticationException:
@@ -306,14 +305,15 @@ async def pl_keyboard(event: bot.SimpleBotEvent):
             await answer(event, "Вы уже вошли.")
             return
 
-        if time() - payload["time"] > 60:
+        if time() - int(payload["time"]) > 60:
             await answer(event, "Время ожидания истекло.")
             return
 
         ruobr = ruobr_api.AsyncRuobr(payload["login"], payload["password"])
         children = await ruobr.get_children()
+        child_id = int(payload["id"])
         for user in children:
-            if user["id"] == payload["id"]:
+            if user["id"] == child_id:
                 break
         name = user["first_name"] + " " + user["last_name"]
         await db.add_user(
