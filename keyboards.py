@@ -1,39 +1,39 @@
 from time import time
-from vkwave.bots.utils.keyboards import Keyboard
+from vkbottle import Keyboard, Callback
 
 
 def children_kb(login, password, children):
-    kb = Keyboard(one_time=True, inline=True)
+    kb = Keyboard(inline=True)
     for i, child in enumerate(children):
-        kb.add_text_button(
-            i + 1,
-            payload={
+        kb.add(
+            Callback(str(i + 1)),
+            {
                 "type": "children",
-                "id": str(child["id"]),
+                "id": child["id"],
                 "login": login,
                 "password": password,
-                "time": str(time()),
+                "time": time(),
             },
         )
-    return kb.get_keyboard()
+    return kb.get_json()
 
 
 def _moving_kb(user, type, **args):
-    kb = Keyboard(one_time=True, inline=True)
+    kb = Keyboard(inline=True)
     pl1 = {
         "type": type,
-        "direction": "-1",
-        "id": str(user.ruobr_id),
-        "time": str(time()),
+        "direction": -1,
+        "id": user.ruobr_id,
+        "time": time(),
     }
     pl1.update(args)
     pl2 = pl1.copy()
-    pl2["direction"] = "1"
+    pl2["direction"] = 1
 
-    kb.add_callback_button("<", payload=pl1)
-    kb.add_callback_button(">", payload=pl2)
+    kb.add(Callback("<", pl1))
+    kb.add(Callback(">", pl2))
 
-    return kb.get_keyboard()
+    return kb.get_json()
 
 
 def marks_kb(user, date0, date1):
@@ -43,7 +43,7 @@ def marks_kb(user, date0, date1):
 
 
 def mail_kb(user, index):
-    return _moving_kb(user, "mail", index=str(index))
+    return _moving_kb(user, "mail", index=index)
 
 
 # нижняя клавиатура

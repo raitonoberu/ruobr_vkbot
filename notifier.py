@@ -1,6 +1,7 @@
 import asyncio
 import json
 import api as ruobr_api
+from vkbottle import API
 from datetime import datetime
 import pytz
 from config import WAIT_IN_MINS, TIMEZONE
@@ -11,7 +12,7 @@ tz = pytz.timezone(TIMEZONE)
 
 
 class Notifier(object):
-    def __init__(self, api, db):
+    def __init__(self, api: API, db):
         self.api = api
         self.db = db
 
@@ -33,6 +34,7 @@ class Notifier(object):
         try:
             await self.api.messages.send(peer_id=vk_id, message=text, random_id=0)
         except Exception as e:
+            # TODO: handle blacklisting
             logging.error(f"{vk_id}: {e}")
 
     async def check_user(self, user):
