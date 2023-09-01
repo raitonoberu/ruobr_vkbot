@@ -94,9 +94,11 @@ async def login(message: Message):
             message, text, keyboard=keyboards.children_kb(login, password, children)
         )
         return
-    else:  # один ребёнок
-        user = children[0]
+    elif len(children) == 0:
+        await answer(message, "На аккаунте не обнаружены дети.")
+        return
 
+    user = children[0]
     name = user["first_name"] + " " + user["last_name"]
     await db.add_user(vk_id, login, password, name, user["id"])
     logging.info(str(vk_id) + " logged in")
