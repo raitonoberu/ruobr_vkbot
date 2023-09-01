@@ -10,7 +10,6 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       VK_TOKEN: ${VK_TOKEN}
-      VK_ID: ${VK_ID}
       WAIT_IN_MINS: ${WAIT_IN_MINS}
       TIMEZONE: ${TIMEZONE}
     restart: always
