@@ -6,12 +6,15 @@ services:
     build: .
     depends_on:
       - db
+      - tor
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       VK_TOKEN: ${VK_TOKEN}
       WAIT_IN_MINS: ${WAIT_IN_MINS}
       TIMEZONE: ${TIMEZONE}
+
+      ALL_PROXY: socks5://tor:9050
     restart: always
 
   db:
@@ -26,6 +29,13 @@ services:
     restart: always
     volumes:
       - postgres:/var/lib/postgresql/data
+
+  tor:
+    container_name: tor
+    image: dockage/tor-privoxy:latest
+    expose:
+      - "9050"
+    restart: always
 
 volumes:
   postgres:

@@ -1,4 +1,5 @@
 ruobr_api==2.0.2
+httpx[socks]
 vkbottle
 pytz
 asyncpg
