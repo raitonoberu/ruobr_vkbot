@@ -21,14 +21,10 @@ class Notifier(object):
 
     async def _loop(self):
         while True:
-            try:
-                users = await self.db.get_users()
-                tasks = [self.check_user(user) for user in users]
-                await asyncio.gather(*tasks)
-                await asyncio.sleep(WAIT_IN_MINS * 60)
-            except:
-                logging.exception("")
-                await asyncio.sleep(1)
+            users = await self.db.get_users()
+            tasks = [self.check_user(user) for user in users]
+            await asyncio.gather(*tasks)
+            await asyncio.sleep(WAIT_IN_MINS * 60)
 
     async def send_msg(self, text, vk_id):
         try:
@@ -38,6 +34,12 @@ class Notifier(object):
             logging.error(f"{vk_id}: {e}")
 
     async def check_user(self, user):
+        try:
+            await self._check_user(user)
+        except:
+            logging.exception("")
+
+    async def _check_user(self, user):
         marks = user.marks
         if marks:
             marks = json.loads(marks)
