@@ -8,7 +8,7 @@ from utils import (
     convert_progress,
 )
 import logging
-from httpx import ConnectTimeout
+from httpx import ConnectTimeout, ProxyError
 
 
 class AsyncRuobr(AsyncRuobr):
@@ -18,6 +18,8 @@ class AsyncRuobr(AsyncRuobr):
                 return await super()._get(target)
             except ConnectTimeout:
                 logging.info("timeout, trying again")
+            except ProxyError:
+                logging.info("proxy error, trying again")
 
 
 def get_ruobr(user):
